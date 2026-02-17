@@ -1,7 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
+import 'deck_model.dart';
 
-class CreateDeckDialog extends StatelessWidget {
-  const CreateDeckDialog({super.key});
+class CreateDeckDialog extends StatefulWidget {
+  final Function(Deck) onDeckCreated;
+
+  const CreateDeckDialog({super.key, required this.onDeckCreated});
+
+  @override
+  State<CreateDeckDialog> createState() => _CreateDeckDialogState();
+}
+
+class _CreateDeckDialogState extends State<CreateDeckDialog> {
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _subjectController = TextEditingController();
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _subjectController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,13 +64,13 @@ class CreateDeckDialog extends StatelessWidget {
 
               _buildInputLabel("Deck Name"),
               const SizedBox(height: 8),
-              _buildTextField("e.g., Spanish Vocabulary"),
+              _buildTextField(_nameController, "e.g., Spanish Vocabulary"),
 
               const SizedBox(height: 20),
 
               _buildInputLabel("Subject"),
               const SizedBox(height: 8),
-              _buildTextField("e.g., Language Learning"),
+              _buildTextField(_subjectController, "e.g., Language Learning"),
 
               const SizedBox(height: 30),
 
@@ -79,9 +98,7 @@ class CreateDeckDialog extends StatelessWidget {
                 child: Material(
                   color: Colors.transparent,
                   child: InkWell(
-                    onTap: () {
-                      Navigator.of(context).pop();
-                    },
+                    onTap: _createDeck,
                     borderRadius: BorderRadius.circular(12),
                     child: const Center(
                       child: Text(
@@ -103,6 +120,25 @@ class CreateDeckDialog extends StatelessWidget {
     );
   }
 
+  void _createDeck() {
+    final name = _nameController.text.trim();
+    final subject = _subjectController.text.trim();
+
+    if (name.isEmpty || subject.isEmpty) {
+      return;
+    }
+
+    final newDeck = Deck(
+      id: const Uuid().v4(),
+      name: name,
+      subject: subject,
+    );
+
+    widget.onDeckCreated(newDeck);
+
+    Navigator.of(context).pop();
+  }
+
   Widget _buildInputLabel(String label) {
     return Text(
       label,
@@ -114,13 +150,14 @@ class CreateDeckDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildTextField(String hint) {
+  Widget _buildTextField(TextEditingController controller, String hint) {
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFFF5F5F5),
         borderRadius: BorderRadius.circular(12),
       ),
       child: TextField(
+        controller: controller,
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: TextStyle(color: Colors.grey[500], fontSize: 14),

@@ -3,9 +3,45 @@ import 'constants.dart';
 import 'dashboard_header.dart';
 import 'stat_card.dart';
 import 'create_deck_dialog.dart';
+import 'deck_model.dart';
+import 'deck_storage_service.dart';
+import 'deck_list_item.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  final DeckStorageService _storageService = DeckStorageService();
+  List<Deck> _decks = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDecks();
+  }
+
+  Future<void> _loadDecks() async {
+    final decks = await _storageService.getDecks();
+    setState(() {
+      _decks = decks;
+      _isLoading = false;
+    });
+  }
+
+  void _onDeckCreated(Deck deck) async {
+    await _storageService.addDeck(deck);
+    _loadDecks();
+  }
+
+  void _deleteDeck(String id) async {
+    await _storageService.deleteDeck(id);
+    _loadDecks();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,39 +76,12 @@ class DashboardScreen extends StatelessWidget {
               ),
               child: Stack(
                 children: [
-                  Center(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 30.0),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          _buildEmptyStateIcon(),
-                          const SizedBox(height: 20),
-                          const Text(
-                            "No Decks Yet",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            "Create your first deck and start\nyour learning journey!",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.9),
-                              fontSize: 14,
-                              height: 1.5,
-                            ),
-                          ),
-                          const SizedBox(height: 60),
-                        ],
-                      ),
-                    ),
-                  ),
+                  _isLoading
+                      ? const Center(
+                          child: CircularProgressIndicator(color: Colors.white))
+                      : _decks.isEmpty
+                          ? _buildEmptyState()
+                          : _buildDeckList(),
 
                   Positioned(
                     bottom: 40,
@@ -90,31 +99,101 @@ class DashboardScreen extends StatelessWidget {
   }
 
   Widget _buildStatsRow() {
+    int totalCards = _decks.fold(0, (sum, deck) => sum + deck.cardCount);
+
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: const [
+        children: [
           Expanded(
             child: StatCard(
               title: "Total Decks",
-              count: "0",
+              count: _decks.length.toString(),
               icon: Icons.chrome_reader_mode_outlined,
               colors: AppColors.deckCardGradient,
-              shadowColor: Color(0xFF3525AF),
+              shadowColor: const Color(0xFF3525AF),
             ),
           ),
-          SizedBox(width: 12),
+          const SizedBox(width: 12),
           Expanded(
             child: StatCard(
               title: "Total Cards",
-              count: "0",
+              count: totalCards.toString(),
               icon: Icons.auto_awesome_outlined,
               colors: AppColors.cardCardGradient,
-              shadowColor: Color(0xFF7B52DD),
+              shadowColor: const Color(0xFF7B52DD),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 30.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _buildEmptyStateIcon(),
+            const SizedBox(height: 20),
+            const Text(
+              "No Decks Yet",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              "Create your first deck and start\nyour learning journey!",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.9),
+                fontSize: 14,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 60),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDeckList() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+          child: Text(
+            "My Decks (${_decks.length})",
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+            itemCount: _decks.length,
+            itemBuilder: (context, index) {
+              final deck = _decks[index];
+              return DeckListItem(
+                deck: deck,
+                onDelete: () => _deleteDeck(deck.id),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
@@ -152,7 +231,9 @@ class DashboardScreen extends StatelessWidget {
           onTap: () {
             showDialog(
               context: context,
-              builder: (context) => const CreateDeckDialog(),
+              builder: (context) => CreateDeckDialog(
+                onDeckCreated: _onDeckCreated,
+              ),
             );
           },
           borderRadius: BorderRadius.circular(16),
