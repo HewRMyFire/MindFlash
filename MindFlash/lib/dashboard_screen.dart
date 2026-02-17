@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'constants.dart';
 import 'dashboard_header.dart';
 import 'stat_card.dart';
+import 'create_deck_dialog.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -77,7 +78,7 @@ class DashboardScreen extends StatelessWidget {
                     bottom: 40,
                     left: 20,
                     right: 20,
-                    child: _buildCreateDeckButton(),
+                    child: _buildCreateDeckButton(context),
                   ),
                 ],
               ),
@@ -131,7 +132,7 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCreateDeckButton() {
+  Widget _buildCreateDeckButton(BuildContext context) {
     return Container(
       height: 55,
       decoration: BoxDecoration(
@@ -148,7 +149,12 @@ class DashboardScreen extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {},
+          onTap: () {
+            showDialog(
+              context: context,
+              builder: (context) => const CreateDeckDialog(),
+            );
+          },
           borderRadius: BorderRadius.circular(16),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
