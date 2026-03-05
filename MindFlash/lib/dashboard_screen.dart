@@ -39,6 +39,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _deleteDeck(String id) async {
+    setState(() {
+      _decks.removeWhere((deck) => deck.id == id);
+    });
     await _storageService.deleteDeck(id);
     _loadDecks();
   }
