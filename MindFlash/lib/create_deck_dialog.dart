@@ -12,6 +12,7 @@ class CreateDeckDialog extends StatefulWidget {
 }
 
 class _CreateDeckDialogState extends State<CreateDeckDialog> {
+  final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _subjectController = TextEditingController();
 
@@ -32,88 +33,109 @@ class _CreateDeckDialogState extends State<CreateDeckDialog> {
         constraints: const BoxConstraints(maxWidth: 400),
         child: Padding(
           padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    "Create New Deck",
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      "Create New Deck",
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
                     ),
-                  ),
-                  IconButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close, color: Colors.grey),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                "Enter the details for your new flashcard deck.",
-                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-              ),
-              const SizedBox(height: 24),
-
-              _buildInputLabel("Deck Name"),
-              const SizedBox(height: 8),
-              _buildTextField(_nameController, "e.g., Spanish Vocabulary"),
-
-              const SizedBox(height: 20),
-
-              _buildInputLabel("Subject"),
-              const SizedBox(height: 8),
-              _buildTextField(_subjectController, "e.g., Language Learning"),
-
-              const SizedBox(height: 30),
-
-              Container(
-                width: double.infinity,
-                height: 50,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFF5B4FE6),
-                      Color(0xFF9E55E6),
-                    ],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF5B4FE6).withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.close, color: Colors.grey),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
                     ),
                   ],
                 ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: _createDeck,
+                const SizedBox(height: 8),
+                Text(
+                  "Enter the details for your new flashcard deck.",
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                ),
+                const SizedBox(height: 24),
+
+                _buildInputLabel("Deck Name"),
+                const SizedBox(height: 8),
+                _buildTextFormField(
+                  controller: _nameController,
+                  hint: "e.g., Spanish Vocabulary",
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Deck name is required';
+                    }
+                    return null;
+                  },
+                ),
+
+                const SizedBox(height: 20),
+
+                _buildInputLabel("Subject"),
+                const SizedBox(height: 8),
+                _buildTextFormField(
+                  controller: _subjectController,
+                  hint: "e.g., Language Learning",
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Subject is required';
+                    }
+                    return null;
+                  },
+                ),
+
+                const SizedBox(height: 30),
+
+                Container(
+                  width: double.infinity,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [
+                        Color(0xFF5B4FE6),
+                        Color(0xFF9E55E6),
+                      ],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                    ),
                     borderRadius: BorderRadius.circular(12),
-                    child: const Center(
-                      child: Text(
-                        "Create Deck",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF5B4FE6).withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: _createDeck,
+                      borderRadius: BorderRadius.circular(12),
+                      child: const Center(
+                        child: Text(
+                          "Create Deck",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -121,22 +143,19 @@ class _CreateDeckDialogState extends State<CreateDeckDialog> {
   }
 
   void _createDeck() {
-    final name = _nameController.text.trim();
-    final subject = _subjectController.text.trim();
+    if (_formKey.currentState!.validate()) {
+      final name = _nameController.text.trim();
+      final subject = _subjectController.text.trim();
 
-    if (name.isEmpty || subject.isEmpty) {
-      return;
+      final newDeck = Deck(
+        id: const Uuid().v4(),
+        name: name,
+        subject: subject,
+      );
+
+      widget.onDeckCreated(newDeck);
+      Navigator.of(context).pop();
     }
-
-    final newDeck = Deck(
-      id: const Uuid().v4(),
-      name: name,
-      subject: subject,
-    );
-
-    widget.onDeckCreated(newDeck);
-
-    Navigator.of(context).pop();
   }
 
   Widget _buildInputLabel(String label) {
@@ -150,21 +169,32 @@ class _CreateDeckDialogState extends State<CreateDeckDialog> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String hint) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFFF5F5F5),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: TextField(
-        controller: controller,
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: TextStyle(color: Colors.grey[500], fontSize: 14),
-          border: InputBorder.none,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+  Widget _buildTextFormField({
+    required TextEditingController controller,
+    required String hint,
+    required String? Function(String?) validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      validator: validator,
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: TextStyle(color: Colors.grey[500], fontSize: 14),
+        filled: true,
+        fillColor: const Color(0xFFF5F5F5),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
         ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red, width: 1),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red, width: 1),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
     );
   }
