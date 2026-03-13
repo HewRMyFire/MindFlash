@@ -185,7 +185,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.white,
                                   foregroundColor: const Color(0xFF7A40F2),
-                                  padding: const EdgeInsets.symmetric(horizontal: 40),
+                                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 10),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                 ),
                                 child: Row(
