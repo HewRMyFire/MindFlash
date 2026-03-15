@@ -7,8 +7,8 @@ class CreateCardDialog extends StatefulWidget {
   final Function(Flashcard) onCardCreated;
 
   const CreateCardDialog({
-    super.key, 
-    required this.deckId, 
+    super.key,
+    required this.deckId,
     required this.onCardCreated
   });
 
@@ -44,14 +44,18 @@ class _CreateCardDialogState extends State<CreateCardDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 400),
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: Container(
+        width: double.infinity,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
           child: Form(
             key: _formKey,
             child: Column(
@@ -84,7 +88,7 @@ class _CreateCardDialogState extends State<CreateCardDialog> {
                 _buildTextFormField(
                   controller: _questionController,
                   hint: "e.g., Enter the question or term...",
-                  validator: (value) => 
+                  validator: (value) =>
                     value == null || value.trim().isEmpty ? 'Question is required' : null,
                 ),
 
@@ -96,7 +100,7 @@ class _CreateCardDialogState extends State<CreateCardDialog> {
                   controller: _answerController,
                   hint: "e.g., Enter the answer or definition...",
                   maxLines: 3,
-                  validator: (value) => 
+                  validator: (value) =>
                     value == null || value.trim().isEmpty ? 'Answer is required' : null,
                 ),
 
@@ -104,14 +108,14 @@ class _CreateCardDialogState extends State<CreateCardDialog> {
 
                 Container(
                   width: double.infinity,
-                  height: 50,
+                  height: 55,
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       colors: [Color(0xFF5B4FE6), Color(0xFF9E55E6)],
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,
                     ),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
                         color: const Color(0xFF5B4FE6).withOpacity(0.3),
@@ -124,7 +128,7 @@ class _CreateCardDialogState extends State<CreateCardDialog> {
                     color: Colors.transparent,
                     child: InkWell(
                       onTap: _createCard,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(16),
                       child: const Center(
                         child: Text(
                           "Save Card",
@@ -177,6 +181,10 @@ class _CreateCardDialogState extends State<CreateCardDialog> {
           borderSide: BorderSide.none,
         ),
         errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red, width: 1),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: Colors.red, width: 1),
         ),

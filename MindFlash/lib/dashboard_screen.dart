@@ -3,11 +3,13 @@ import 'constants.dart';
 import 'dashboard_header.dart';
 import 'stat_card.dart';
 import 'create_deck_dialog.dart';
+import 'create_deck_ai_dialog.dart';
+import 'update_deck_ai_dialog.dart';
 import 'deck_model.dart';
 import 'deck_storage_service.dart';
 import 'deck_list_item.dart';
 import 'deck_view.dart';
-import 'ai_chat_screen.dart'; // --- IMPORT NEW AI SCREEN ---
+import 'ai_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -48,6 +50,202 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _loadDecks();
   }
 
+  // --- NEW: Helper method to handle AI loading state and API calls ---
+  Future<void> _processAIGeneration(BuildContext context, String prompt) async {
+    // 1. Show a loading dialog so the user knows AI is thinking
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Prevent user from dismissing it by tapping outside
+      builder: (loadingContext) => Center(
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              CircularProgressIndicator(color: Color(0xFF5B4FE6)),
+              SizedBox(height: 16),
+              Text(
+                "MindFlash AI is thinking...",
+                style: TextStyle(
+                  fontSize: 14, 
+                  fontWeight: FontWeight.bold,
+                  decoration: TextDecoration.none, // Removes yellow underline from dialog text
+                  color: Colors.black87
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    try {
+      // 2. Call your actual backend service
+      final aiService = AIService();
+      final response = await aiService.processInput(text: prompt);
+      
+      // 3. Close the loading dialog safely
+      if (context.mounted) Navigator.pop(context);
+      
+      // 4. Refresh the decks to show the newly generated content
+      _loadDecks();
+      
+      // 5. Show success message from the server
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response.message),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      // Close the loading dialog safely on error
+      if (context.mounted) Navigator.pop(context);
+      
+      // Show error message
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Generation Failed: ${e.toString()}"),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
+  }
+
+  // --- AI Options Menu ---
+  void _showAIOptionsModal(BuildContext parentContext) {
+    showModalBottomSheet(
+      context: parentContext,
+      backgroundColor: Colors.transparent,
+      builder: (modalContext) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 30.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    "AI Generation",
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.of(modalContext).pop(),
+                    icon: const Icon(Icons.close, color: Colors.grey),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                "Choose how you want MindFlash AI to help you.",
+                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+              ),
+              const SizedBox(height: 24),
+              
+              // Option 1: Create New Deck
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF5B4FE6).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.auto_awesome, color: Color(0xFF5B4FE6)),
+                ),
+                title: const Text(
+                  "Create New Deck with AI",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                subtitle: const Text("Generate a completely new deck from a prompt"),
+                onTap: () {
+                  Navigator.pop(modalContext); 
+                  
+                  showModalBottomSheet(
+                    context: parentContext,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => CreateDeckAIDialog(
+                      // CONNECTED TO AI SERVICE
+                      onGenerate: (topic) => _processAIGeneration(parentContext, topic),
+                    ),
+                  );
+                },
+              ),
+              const Divider(height: 30),
+              
+              // Option 2: Update Existing Deck
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE940A3).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.update, color: Color(0xFFE940A3)),
+                ),
+                title: const Text(
+                  "Update Deck with AI",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                subtitle: const Text("Add newly generated cards to an existing deck"),
+                onTap: () {
+                  Navigator.pop(modalContext);
+
+                  if (_decks.isEmpty) {
+                    ScaffoldMessenger.of(parentContext).showSnackBar(
+                      const SnackBar(
+                        content: Text("You need to create a deck first before updating one!"),
+                        backgroundColor: Colors.redAccent,
+                      ),
+                    );
+                    return;
+                  }
+
+                  showModalBottomSheet(
+                    context: parentContext,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => UpdateDeckAIDialog(
+                      decks: _decks,
+                      // CONNECTED TO AI SERVICE WITH CONTEXTUAL PROMPT
+                      onGenerate: (Deck deck, String topic) {
+                         // We format the prompt so the backend knows exactly which deck to update
+                         final engineeredPrompt = "Update the deck '${deck.name}' with the following topic/cards: $topic";
+                         _processAIGeneration(parentContext, engineeredPrompt);
+                      },
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 10),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -79,10 +277,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   colors: AppColors.mainBackgroundGradient,
                 ),
               ),
-              // CHANGED: Replaced Stack with a Column so the list and buttons never overlap
               child: Column(
                 children: [
-                  // This Expanded forces the list/loading state to take up all space ABOVE the buttons
                   Expanded(
                     child: _isLoading
                         ? const Center(
@@ -91,8 +287,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ? _buildEmptyState()
                             : _buildDeckList(),
                   ),
-                  
-                  // Action buttons sit firmly at the bottom of the Column
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 10, 20, 40),
                     child: _buildActionButtons(context),
@@ -166,7 +360,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 height: 1.5,
               ),
             ),
-            // CHANGED: Removed the huge 100px SizedBox here since buttons are no longer floating
           ],
         ),
       ),
@@ -190,7 +383,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         Expanded(
           child: ListView.builder(
-            // CHANGED: Reduced the bottom padding from 150 to 15. The list stops right above the buttons now.
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 15), 
             itemCount: _decks.length,
             itemBuilder: (context, index) {
@@ -233,12 +425,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // AI Generate Button
+        // AI Generate Button Menu Trigger
         Container(
           height: 55,
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFF2C1A8A), Color(0xFF5B4FE6)], // Darker contrast
+              colors: [Color(0xFF2C1A8A), Color(0xFF5B4FE6)], 
             ),
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
@@ -252,14 +444,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              onTap: () async {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const AIChatScreen()),
-                );
-                // Refresh decks when coming back from AI screen
-                _loadDecks();
-              },
+              onTap: () => _showAIOptionsModal(context),
               borderRadius: BorderRadius.circular(16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -280,7 +465,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        // Manual Create Button
+        // Manual Create Button Bottom Sheet Trigger
         Container(
           height: 55,
           decoration: BoxDecoration(
@@ -298,8 +483,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
             color: Colors.transparent,
             child: InkWell(
               onTap: () {
-                showDialog(
+                showModalBottomSheet(
                   context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
                   builder: (context) => CreateDeckDialog(
                     onDeckCreated: _onDeckCreated,
                   ),
