@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'deck_model.dart';
 import 'card_model.dart';
 import 'card_storage_service.dart';
-import 'deck_storage_service.dart'; 
+import 'deck_storage_service.dart';
 import 'create_card_dialog.dart';
 import 'edit_card_dialog.dart';
 import 'review.dart';
-import 'quiz_creator.dart'; // --- IMPORT NEW QUIZ ENGINE ---
-import 'quiz_screen.dart';       // --- IMPORT NEW QUIZ SCREEN ---
+import 'quiz_creator.dart';
+import 'quiz_screen.dart';
 
 class DeckView extends StatefulWidget {
   final Deck deck;
@@ -74,10 +74,9 @@ class _DeckViewState extends State<DeckView> {
         ),
       ),
     );
-    _loadCards(); 
+    _loadCards();
   }
 
-  // --- ADDED QUIZ START LOGIC ---
   void _startQuiz() {
     if (_cards.length < 4) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -195,7 +194,7 @@ class _DeckViewState extends State<DeckView> {
                 children: [
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
-                    child: Column( // --- WRAPPED ACTION BUTTONS IN A COLUMN ---
+                    child: Column(
                       children: [
                         Row(
                           children: [
@@ -249,8 +248,8 @@ class _DeckViewState extends State<DeckView> {
                                         Text(
                                           _isShuffleOn ? "Shuffle ON" : "Shuffle OFF",
                                           style: TextStyle(
-                                            color: _isShuffleOn ? const Color(0xFF7A40F2) : Colors.black87, 
-                                            fontWeight: FontWeight.bold, 
+                                            color: _isShuffleOn ? const Color(0xFF7A40F2) : Colors.black87,
+                                            fontWeight: FontWeight.bold,
                                             fontSize: 15
                                           ),
                                         ),
@@ -262,15 +261,14 @@ class _DeckViewState extends State<DeckView> {
                             ),
                           ],
                         ),
-                        
-                        const SizedBox(height: 12), // Space between rows
 
-                        // --- ADDED NEW QUIZ BUTTON HERE ---
+                        const SizedBox(height: 12),
+
                         Container(
                           height: 55,
                           width: double.infinity,
                           decoration: BoxDecoration(
-                            color: Colors.white, // White background pops against gradient
+                            color: Colors.white,
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Material(
@@ -281,13 +279,13 @@ class _DeckViewState extends State<DeckView> {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: const [
-                                  Icon(Icons.quiz_outlined, color: Color(0xFF8B4EFF)), // Purple icon
+                                  Icon(Icons.quiz_outlined, color: Color(0xFF8B4EFF)),
                                   SizedBox(width: 8),
                                   Text(
                                     "Test My Knowledge (Quiz)",
                                     style: TextStyle(
-                                      color: Color(0xFF8B4EFF), // Purple text
-                                      fontWeight: FontWeight.bold, 
+                                      color: Color(0xFF8B4EFF),
+                                      fontWeight: FontWeight.bold,
                                       fontSize: 15
                                     ),
                                   ),
@@ -328,8 +326,10 @@ class _DeckViewState extends State<DeckView> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
-          showDialog(
+          showModalBottomSheet(
             context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
             builder: (context) => CreateCardDialog(
               deckId: widget.deck.id,
               onCardCreated: _onCardCreated,
@@ -431,7 +431,7 @@ class _DeckViewState extends State<DeckView> {
                 ],
               ),
               const SizedBox(height: 16),
-              
+
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
@@ -449,7 +449,7 @@ class _DeckViewState extends State<DeckView> {
                     const SizedBox(height: 4),
                     Text(card.question, style: const TextStyle(color: Colors.black87, fontSize: 14)),
                     const SizedBox(height: 16),
-              
+
                     const Text(
                       "ANSWER",
                       style: TextStyle(color: Color(0xFFC042E6), fontSize: 10, fontWeight: FontWeight.bold),

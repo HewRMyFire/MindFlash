@@ -25,14 +25,18 @@ class _CreateDeckDialogState extends State<CreateDeckDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 400),
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: Container(
+        width: double.infinity,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
           child: Form(
             key: _formKey,
             child: Column(
@@ -97,7 +101,7 @@ class _CreateDeckDialogState extends State<CreateDeckDialog> {
 
                 Container(
                   width: double.infinity,
-                  height: 50,
+                  height: 55,
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       colors: [
@@ -107,7 +111,7 @@ class _CreateDeckDialogState extends State<CreateDeckDialog> {
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,
                     ),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
                         color: const Color(0xFF5B4FE6).withOpacity(0.3),
@@ -120,7 +124,7 @@ class _CreateDeckDialogState extends State<CreateDeckDialog> {
                     color: Colors.transparent,
                     child: InkWell(
                       onTap: _createDeck,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(16),
                       child: const Center(
                         child: Text(
                           "Create Deck",
